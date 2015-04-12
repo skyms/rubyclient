@@ -1,4 +1,4 @@
-# O365rubylib
+# o365rubyeasy
 
 This Ruby Gem is intended for Ruby web application developers to access Office 365 Services, which includes OneDrive for Business, Outlook, etc. This initial version targets subset of v1.0 OneDrive Business Files APIs. 
 The details of the Office 365 REST APIs can be found at http://dev.office.com under documentation section. 
@@ -16,7 +16,7 @@ This allows App registration and configuration, which is a key input into creati
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'o365rubylib'
+gem 'o365rubyeasy'
 ```
 
 And then execute:
@@ -25,13 +25,13 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install o365rubylib
+    $ gem install o365rubyeasy
 
-In your Application require o365rubylib
+In your Application require o365rubyeasy
 
 ## Setup
 ```ruby
-require 'o365rubylib'
+require 'o365rubyeasy'
 ```
 
 ## Usage
@@ -45,6 +45,9 @@ todo: The Office 365 discovery service needs to be incorporated. Until that time
 
 To create a Session object, supply the input configuration details.
 
+
+**Why not just take in the tenant-name and be done with it? library should determine the fileservice_uri and resource uri **
+
 ```ruby
 APP_CONFIG = {
     client_id: "32ea5265-35bc-49c7-bf03-fa7928bc07dc",
@@ -57,29 +60,27 @@ APP_CONFIG = {
 
 Next, create a session by passing the configuration information to the session object.
 ```ruby
-session = O365rubylib::Session.new (APP_CONFIG)
+session = o365rubyeasy::Session.new (APP_CONFIG)
 ```
 When the user visits your application, ensure that you have the required consent. You can redirect the user to Azure authentication service and have them consent the necessary permissions needed by your App.
 
 You can create an authorization URL as follows
+
 ```ruby
 auth_url = session.get_auth_url
 ```
-After consent, Azure will redirect to the URL supplied in the "redirect_uri". In that page/service, create the Oauth2 access token OneDrive Files client.
-```ruby
-accesstoken = session.get_access_token(params[:code])	
-fileClient = O365rubylib::OneDriveClient.new (session)
-```
-Now armed with the client, you can access O365 Files APIs. 
+After consent, Azure will redirect to the URL supplied in the "redirect_uri". In that page/service, create the Oauth2 access token and file client.
 
 ```ruby
 accesstoken = session.get_access_token(params[:code])	
-fileClient = O365rubylib::OneDriveClient.new (session)
+fileClient = o365rubyeasy::OneDriveClient.new (session)
 ```
+With the file client, you can access O365 Files APIs. 
 
 ### APIs 
 
 Get File or Folder metadata. You'll receive a hash of the item:
+
 ```ruby
 enc_path = URI::encode('resource-path')
 item = fileClient.getItemByPath(enc_path)
@@ -103,7 +104,6 @@ Delete a resource:
 enc_path = URI::encode('resource-path')
 fileClient.deleteItem(enc_path)    
 ```
-
 Download a file to a local destination: 
 ```ruby
 enc_path = URI::encode('resource-path')
@@ -120,7 +120,7 @@ More coming...
 
 ## Contributing
 
-1. Fork it ( https://github.com/[my-github-username]/o365rubylib/fork )
+1. Fork it ( https://github.com/[my-github-username]/o365rubyeasy/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
