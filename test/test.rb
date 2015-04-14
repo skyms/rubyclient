@@ -30,7 +30,6 @@ end
 # @return Authozation URL
 
 get '/' do 
-
 	logger.debug "T entering the main sinatra loop"	
 	out = "<center> <h3> Click <a href=#{auth_url}> here </a> to access file browser </h3></center> "
 end
