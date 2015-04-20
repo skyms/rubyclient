@@ -29,11 +29,28 @@ end
 #
 # @return Authozation URL
 
+
 get '/' do 
+    logger.debug "T inside /new with: #{auth_url}"
+    # erb :index,  locals:  {authrUrl: params[:code]}
+    erb :index, :locals => {:authrUrl => auth_url}
+end
+
+get '/new' do 
 	logger.debug "T entering the main sinatra loop"	
 	out = "<center> <h3> Click <a href=#{auth_url}> here </a> to access file browser </h3></center> "
 end
 
 get '/go' do 
 	logger.debug "T inside /go with: #{params[:code]}"
+    erb :discover, :locals => {:authrUrl => params[:code]}
 end
+
+get '/' do 
+    logger.debug "T inside /new with: #{auth_url}"
+    # erb :index,  locals:  {authrUrl: params[:code]}
+    erb :index, :locals => {:authrUrl => auth_url}
+end
+
+
+
