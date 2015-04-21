@@ -87,7 +87,7 @@ class OneDriveClient
         set_access_token(authcodeParam, "Discovery")        
         j = doGetRequest (O365RubyEasy::DISCOVERY_SERVER)
         logger.debug "D, #{j.to_s}"
-        return j.to_s
+        return j["value"][0]["serviceEndpointUri"]
 	end
 
 	##
