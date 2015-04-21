@@ -9,8 +9,7 @@ logger.level = Logger::DEBUG
 SESSION = {
     client_id: "32ea5265-35bc-49c7-bf03-fa7928bc07dc",
     redirect_uri: "http://localhost:4567/go",
-    secret: "C+WTbpXIt26drLsv3lXY/qyOQn6hPfGcLHo8IYnHO1Q=",
-    tenant_name: "marsmons"
+    secret: "C+WTbpXIt26drLsv3lXY/qyOQn6hPfGcLHo8IYnHO1Q="
 	}
 
 client = O365RubyEasy::OneDriveClient.new (SESSION)
@@ -31,7 +30,7 @@ end
 
 
 get '/' do 
-    logger.debug "T inside /new with: #{auth_url}"
+    logger.debug "T inside /     with: #{auth_url}"
     # erb :index,  locals:  {authrUrl: params[:code]}
     erb :index, :locals => {:authrUrl => auth_url}
 end
@@ -43,14 +42,10 @@ end
 
 get '/go' do 
 	logger.debug "T inside /go with: #{params[:code]}"
-    erb :discover, :locals => {:authrUrl => params[:code]}
+    j = client.return_file_source_hash(params[:code])
+    erb :discover, :locals => {:accesstoken => j}
 end
 
-get '/' do 
-    logger.debug "T inside /new with: #{auth_url}"
-    # erb :index,  locals:  {authrUrl: params[:code]}
-    erb :index, :locals => {:authrUrl => auth_url}
-end
 
 
 

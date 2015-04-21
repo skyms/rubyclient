@@ -1,5 +1,6 @@
 require 'net/https'
 require 'uri'
+require 'json'
 
 module O365RubyEasy
 
@@ -8,6 +9,7 @@ class OneDriveClient
 	@@auth_path = '/common/oauth2/'
 
 	attr_accessor :client_id, :secret, :redirect_uri, :files_resource_path, :authcode, :access_token, :refresh_token
+
 
 	def initialize(session={})
 		@client_id = session[:client_id] || nil
@@ -30,7 +32,7 @@ class OneDriveClient
             "response_type" => "code",
             "redirect_uri" => @redirect_uri
         }
-        auth_uri = URI::Generic.new("https", nil, @auth_server, nil, nil, "#{@@auth_path}authorize", 
+        auth_uri = URI::Generic.new("https", nil, O365RubyEasy::AAD_AUTH_SERVER, nil, nil, "authorize", 
         							 nil, nil, nil)
         auth_uri.query = URI.encode_www_form(params)
         logger.debug "Generated URI: #{auth_uri.to_s}"
@@ -43,13 +45,13 @@ class OneDriveClient
 	# If session is initialized with an auth-code, then it'll 
 	# used to return the access token
 	#
-	def get_access_token(authcodeParam = nil, mode = nil) 
+	def set_access_token(authcodeParam = nil, mode = nil) 
 		logger.debug "D, #{__method__.to_s}, authcode passed = #{authcodeParam}"
       	@auth_code = authcodeParam unless authcodeParam.nil?  
 		puts @auth_code 
 		#access_token = #call oauth to get the access token...	
 		#refresh_token = #save refresh token
-		uri = URI.parse("#{O365RubyEasy::AAD_AUTH_SERVER}#token")
+		uri = URI.parse("https://#{O365RubyEasy::AAD_AUTH_SERVER}token")
         request = Net::HTTP::Post.new(uri.request_uri)
 
         if mode == "Discovery"
@@ -62,34 +64,30 @@ class OneDriveClient
             "grant_type" => "authorization_code",
             "client_id" => @client_id,
             #"client_secret" => CGI.escape(@client_secret),
-            "client_secret" => client_secret,
+            "client_secret" => @secret,
             "code" => @auth_code,
             "redirect_uri" => @redirect_uri,
-            "resource" => O365RubyEasy::DISCOVER_RESOURCE 
+            "resource" => resource
         }
         # request.set_form_data(params)
-        response = O365rubylib::do_http_with_body(uri, request, params)
+        response = O365RubyEasy::do_http_with_body(uri, request, params)
         j = JSON.parse(response.body) 
         @access_token = j['access_token']
-        @refresh_token = j['refresh_token']
-     	return @access_token
-
+        if mode != "Discovery"
+            @refresh_token = j['refresh_token']
+        end
+     	return 
     end
 
 	##
 	# Call Discovery Service and obtain the service end points 
 	#
-	def get_discovery_info
+	def return_file_source_hash(authcodeParam = nil)
         logger.debug "D, #{__method__.to_s}"
-        uri = URI.parse(O365RubyEasy::DISCOVERY_SERVER)
-        request = Net::HTTP::Get.new(uri)
-        request['Authorization']= "Bearer #{@	.access_token}"
-        request['Accept']= "application/json;odata.metadata=none"
-        response = O365rubylib::do_http(uri, request)
-        j = JSON.parse(response.body) 
-        @access_token = j['access_token']
-        @refresh_token = j['refresh_token']
-     	return @access_token
+        set_access_token(authcodeParam, "Discovery")        
+        j = doGetRequest (O365RubyEasy::DISCOVERY_SERVER)
+        logger.debug "D, #{j.to_s}"
+        return j.to_s
 	end
 
 	##
@@ -108,7 +106,10 @@ class OneDriveClient
             return response.body
         end
     end
-	
+
+    ##
+    # Test Print
+    #	
 	def print_close
 		logger.debug "#{@auth_server}"
 		logger.debug "#{@client_id}"
