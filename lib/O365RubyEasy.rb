@@ -10,7 +10,7 @@ module O365RubyEasy
     DISCOVERY_SERVER = "https://api.office.com/discovery/v1.0/me/services"
     AAD_AUTH_SERVER = "login.windows.net/common/oauth2/"
     DISCOVER_RESOURCE = "https://api.office.com/discovery/"
-    SEARCH_SEGMENT = "_api/search/"
+    SEARCH_SEGMENT = "_api/search/query?querytext='contentclass:sts_site'"
 
 
 
@@ -41,11 +41,15 @@ module O365RubyEasy
 #        http.verify_mode = OpenSSL::SSL::VERIFY_PEER
 #        http.ca_file = O365API::TRUSTED_CERT_FILE
         http.set_debug_output($stdout) 
-        begin
-            http.request(request)
-        rescue 
-        	logger.fatal "F, Error while executing the HTTP command"
-            raise RuntimeError.new("Error while executing the HTTP command")
+        
+        response = http.request(request)
+
+        case response.code.to_i
+            when (200..399)
+                response
+            else
+                logger.fatal "F, Error while executing the HTTP command"
+                raise RuntimeError.new("Error while executing the HTTP command")
         end
     end
 

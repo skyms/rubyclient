@@ -11,7 +11,6 @@ class OneDriveClient
 	attr_accessor :client_id, :secret, :redirect_uri, :files_resource_path, :authcode, :access_token, :refresh_token,
                   :files_serviceResourceId
 
-
 	def initialize(session={})
 		@client_id = session[:client_id] || nil
 		@secret = session[:secret] || nil	
@@ -19,8 +18,7 @@ class OneDriveClient
 	end
 
 	include O365RubyEasy::Logging
-
-
+    
 	##
     # Returns the authorization URL that the application use to re-direct the user for 
     # login and authorization purpose.
@@ -47,14 +45,14 @@ class OneDriveClient
 	# used to return the access token
 	#
 	def set_access_token(authcodeParam = nil, resource = nil, update_refToken = false) 
-		logger.debug "D, #{__method__.to_s}, authcode passed = #{authcodeParam}"
+		logger.debug "D, #{__method__.to_s}, resource= #{resource}, authcode passed = #{authcodeParam} "
       	@auth_code = authcodeParam unless authcodeParam.nil?  
 		puts @auth_code 
 		#access_token = #call oauth to get the access token...	
 		#refresh_token = #save refresh token
 		uri = URI.parse("https://#{O365RubyEasy::AAD_AUTH_SERVER}token")
         request = Net::HTTP::Post.new(uri.request_uri)
-        resource = @files_resource_path
+        resource = resource 
         params = {
             "grant_type" => "authorization_code",
             "client_id" => @client_id,
@@ -79,6 +77,7 @@ class OneDriveClient
 	#
 	def return_file_source_hash(authcodeParam = nil)
         logger.debug "D, #{__method__.to_s}"
+        libArray = []
         set_access_token(authcodeParam, O365RubyEasy::DISCOVER_RESOURCE)        
         j = doGetRequest (O365RubyEasy::DISCOVERY_SERVER)
         logger.debug "D, #{j.to_s}"
@@ -87,20 +86,39 @@ class OneDriveClient
             if resource["capability"] == "MyFiles"
                 @files_resource_path = resource["serviceEndpointUri"]
                 @files_serviceResourceId = resource["serviceResourceId"]
+                libArray.push @files_resource_path
             end
         end
-        return @files_resource_path
+
+        if (@files_serviceResourceId)
+           logger.debug "D, CALLING SET ACCESS TOKEN AGAIN WITH #{@files_serviceResourceId}"
+           set_access_token(authcodeParam, @files_serviceResourceId, true)
+           j = doGetRequest(@files_serviceResourceId+O365RubyEasy::SEARCH_SEGMENT, true, true) 
+           hArray = j["PrimaryQueryResult"]["RelevantResults"]["Table"]["Rows"]
+           hArray.each do |r|
+                r["Cells"].each do |s|
+                    if s["Key"] == "Path"
+                        libArray.push s["Value"]
+                    end
+                end
+           end
+        end
+        return libArray.to_s
 	end
 
 	##
 	# Generic GET Request initiator
 	#
-	def doGetRequest(geturl, useJsonFormat=true)
+	def doGetRequest(geturl, useJsonFormat=true, oDataMetadata=false)
         logger.debug "D, #{__method__.to_s}"		
         uri = URI.parse(geturl)
         request = Net::HTTP::Get.new(uri)
         request['Authorization']= "Bearer #{@access_token}"
-        request['Accept']= "application/json;odata.metadata=none"
+        if oDataMetadata
+            request['Accept']= "application/json"
+        else
+            request['Accept']= "application/json;odata.metadata=none"
+        end
         response = O365RubyEasy::do_http(uri, request)
         if useJsonFormat
             return JSON.parse(response.body)
