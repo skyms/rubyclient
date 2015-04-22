@@ -8,7 +8,8 @@ class OneDriveClient
 	@@filev1segment = '/_api/v1.0/me/'
 	@@auth_path = '/common/oauth2/'
 
-	attr_accessor :client_id, :secret, :redirect_uri, :files_resource_path, :authcode, :access_token, :refresh_token
+	attr_accessor :client_id, :secret, :redirect_uri, :files_resource_path, :authcode, :access_token, :refresh_token,
+                  :files_serviceResourceId
 
 
 	def initialize(session={})
@@ -45,7 +46,7 @@ class OneDriveClient
 	# If session is initialized with an auth-code, then it'll 
 	# used to return the access token
 	#
-	def set_access_token(authcodeParam = nil, mode = nil) 
+	def set_access_token(authcodeParam = nil, resource = nil, update_refToken = false) 
 		logger.debug "D, #{__method__.to_s}, authcode passed = #{authcodeParam}"
       	@auth_code = authcodeParam unless authcodeParam.nil?  
 		puts @auth_code 
@@ -53,13 +54,7 @@ class OneDriveClient
 		#refresh_token = #save refresh token
 		uri = URI.parse("https://#{O365RubyEasy::AAD_AUTH_SERVER}token")
         request = Net::HTTP::Post.new(uri.request_uri)
-
-        if mode == "Discovery"
-        	resource = O365RubyEasy::DISCOVER_RESOURCE 
-        else
-        	resource = @files_resource_path
-        end
-
+        resource = @files_resource_path
         params = {
             "grant_type" => "authorization_code",
             "client_id" => @client_id,
@@ -73,7 +68,7 @@ class OneDriveClient
         response = O365RubyEasy::do_http_with_body(uri, request, params)
         j = JSON.parse(response.body) 
         @access_token = j['access_token']
-        if mode != "Discovery"
+        if update_refToken
             @refresh_token = j['refresh_token']
         end
      	return 
@@ -84,10 +79,17 @@ class OneDriveClient
 	#
 	def return_file_source_hash(authcodeParam = nil)
         logger.debug "D, #{__method__.to_s}"
-        set_access_token(authcodeParam, "Discovery")        
+        set_access_token(authcodeParam, O365RubyEasy::DISCOVER_RESOURCE)        
         j = doGetRequest (O365RubyEasy::DISCOVERY_SERVER)
         logger.debug "D, #{j.to_s}"
-        return j["value"][0]["serviceEndpointUri"]
+
+        j["value"].each do |resource|
+            if resource["capability"] == "MyFiles"
+                @files_resource_path = resource["serviceEndpointUri"]
+                @files_serviceResourceId = resource["serviceResourceId"]
+            end
+        end
+        return @files_resource_path
 	end
 
 	##

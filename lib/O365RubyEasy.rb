@@ -10,7 +10,7 @@ module O365RubyEasy
     DISCOVERY_SERVER = "https://api.office.com/discovery/v1.0/me/services"
     AAD_AUTH_SERVER = "login.windows.net/common/oauth2/"
     DISCOVER_RESOURCE = "https://api.office.com/discovery/"
-    API_SEGMENT = "_api/v1.0/files/"
+    SEARCH_SEGMENT = "_api/search/"
 
 
 
