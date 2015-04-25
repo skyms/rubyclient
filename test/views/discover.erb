@@ -49,8 +49,10 @@
 
       <div class="row marketing">
         <div class="col-lg-60">
-          <h4>Discovery Access token</h4>
-          <p> <%= accesstoken %> </p>
+          <h4>Choose Library</h4>
+          <%= accesstoken.each do |lib| %>
+            <p> <%= lib %> </p>
+          <%= end %>
         </div>
       </div>
 
