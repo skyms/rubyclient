@@ -103,7 +103,7 @@ class OneDriveClient
                 end
            end
         end
-        return libArray.to_s
+        return libArray
 	end
 
 	##
